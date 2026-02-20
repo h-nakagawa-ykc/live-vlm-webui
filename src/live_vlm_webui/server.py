@@ -37,6 +37,7 @@ from aiortc.contrib.media import MediaRelay
 
 from .vlm_service import VLMService
 from .video_processor import VideoProcessorTrack
+from .video_vlm_pipeline import VideoVLMPipeline
 from .gpu_monitor import create_monitor
 from .rtsp_track import RTSPVideoTrack
 
@@ -54,6 +55,29 @@ websockets = set()  # Track active WebSocket connections
 gpu_monitor = None  # GPU monitoring instance
 gpu_monitor_task = None  # Background task for GPU monitoring
 rtsp_tracks = {}  # Track active RTSP streams {session_id: (rtsp_track, processor_track)}
+
+
+def create_video_vlm_pipeline(service: VLMService):
+    """
+    Create optional multi-frame pipeline from env vars.
+    Keeps backward compatibility by default (disabled unless explicitly enabled).
+    """
+    enabled = os.getenv("LIVE_VLM_ENABLE_MULTI_FRAME", "0").lower() in ("1", "true", "yes", "on")
+    if not enabled:
+        return None
+
+    try:
+        return VideoVLMPipeline(
+            vlm_service=service,
+            buffer_size=int(os.getenv("LIVE_VLM_BUFFER_SIZE", "16")),
+            trigger_size=int(os.getenv("LIVE_VLM_TRIGGER_SIZE", "4")),
+            target_frames=int(os.getenv("LIVE_VLM_TARGET_FRAMES", "4")),
+            interval_step=int(os.getenv("LIVE_VLM_INTERVAL_STEP", "1")),
+            scene_change_threshold=float(os.getenv("LIVE_VLM_SCENE_THRESHOLD", "20.0")),
+        )
+    except Exception as e:
+        logger.error(f"Failed to initialize VideoVLMPipeline, fallback to single-frame mode: {e}")
+        return None
 
 
 def is_port_available(port, host="0.0.0.0"):
@@ -513,7 +537,10 @@ async def offer(request):
             relayed_rtsp = relay.subscribe(rtsp_track)
 
             processor_track = VideoProcessorTrack(
-                relayed_rtsp, vlm_service, text_callback=broadcast_text_update
+                relayed_rtsp,
+                vlm_service,
+                text_callback=broadcast_text_update,
+                pipeline=create_video_vlm_pipeline(vlm_service),
             )
 
             # Add processor directly to peer connection
@@ -536,7 +563,10 @@ async def offer(request):
             if track.kind == "video":
                 # Create processor track with VLM service and text callback
                 processor_track = VideoProcessorTrack(
-                    relay.subscribe(track), vlm_service, text_callback=broadcast_text_update
+                    relay.subscribe(track),
+                    vlm_service,
+                    text_callback=broadcast_text_update,
+                    pipeline=create_video_vlm_pipeline(vlm_service),
                 )
 
                 # Add processed track back to connection
@@ -604,7 +634,10 @@ async def rtsp_start(request):
 
         # Create processor track (same as WebRTC path)
         processor_track = VideoProcessorTrack(
-            rtsp_track, vlm_service, text_callback=broadcast_text_update
+            rtsp_track,
+            vlm_service,
+            text_callback=broadcast_text_update,
+            pipeline=create_video_vlm_pipeline(vlm_service),
         )
 
         # Start background task to consume frames
