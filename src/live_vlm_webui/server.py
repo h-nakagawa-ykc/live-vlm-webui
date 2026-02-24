@@ -38,6 +38,7 @@ from aiortc.contrib.media import MediaRelay
 from .vlm_service import VLMService
 from .video_processor import VideoProcessorTrack
 from .video_vlm_pipeline import VideoVLMPipeline
+from .event_dispatcher import EventDispatcher, EventDispatcherConfig
 from .gpu_monitor import create_monitor
 from .rtsp_track import RTSPVideoTrack
 
@@ -795,7 +796,7 @@ async def on_startup(app):
 
 async def on_shutdown(app):
     """Cleanup on server shutdown"""
-    global gpu_monitor, gpu_monitor_task
+    global gpu_monitor, gpu_monitor_task, vlm_service
 
     logger.info("Shutting down server...")
 
@@ -827,6 +828,14 @@ async def on_shutdown(app):
     coros = [pc.close() for pc in pcs]
     await asyncio.gather(*coros)
     pcs.clear()
+
+    # Close optional webhook dispatcher session if present
+    if vlm_service and getattr(vlm_service, "event_dispatcher", None):
+        try:
+            await vlm_service.event_dispatcher.close()
+            logger.info("Webhook dispatcher closed")
+        except Exception as e:
+            logger.warning(f"Failed to close webhook dispatcher: {e}")
 
     logger.info("Cleanup complete")
 
@@ -1065,9 +1074,30 @@ def main():
                 logger.warning("   Set with: --api-key YOUR_API_KEY")
                 logger.warning("   Or use WebUI to configure API settings after starting")
 
+    # Build optional event dispatcher (Issue 3: single-frame inference dispatch wiring)
+    event_dispatcher = None
+    if webhook_config.enabled:
+        event_dispatcher = EventDispatcher(
+            EventDispatcherConfig(
+                enabled=webhook_config.enabled,
+                url=webhook_config.url,
+                timeout_sec=webhook_config.timeout_sec,
+                mode=webhook_config.mode,
+                sample_every=webhook_config.sample_every,
+                include_metrics=webhook_config.include_metrics,
+            )
+        )
+        logger.info("Webhook dispatcher initialized")
+
     # Initialize VLM service
     global vlm_service
-    vlm_service = VLMService(model=model, api_base=api_base, api_key=api_key, prompt=args.prompt)
+    vlm_service = VLMService(
+        model=model,
+        api_base=api_base,
+        api_key=api_key,
+        prompt=args.prompt,
+        event_dispatcher=event_dispatcher,
+    )
 
     # Log initialization with better formatting
     service_name = "Local" if "localhost" in api_base or "127.0.0.1" in api_base else "Cloud"
