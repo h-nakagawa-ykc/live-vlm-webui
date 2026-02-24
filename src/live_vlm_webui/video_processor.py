@@ -29,6 +29,7 @@ import time
 import av
 
 from .vlm_service import VLMService
+from .video_vlm_pipeline import VideoVLMPipeline
 
 # Enable swscaler warnings to track hardware acceleration status
 # TODO: Implement hardware-accelerated color space conversion on Jetson using NVMM/VPI
@@ -48,11 +49,18 @@ class VideoProcessorTrack(VideoStreamTrack):
     # Max allowed latency before dropping frames (in seconds, 0 = disabled)
     max_frame_latency = 0.0
 
-    def __init__(self, track: VideoStreamTrack, vlm_service: VLMService, text_callback=None):
+    def __init__(
+        self,
+        track: VideoStreamTrack,
+        vlm_service: VLMService,
+        text_callback=None,
+        pipeline: Optional[VideoVLMPipeline] = None,
+    ):
         super().__init__()
         self.track = track
         self.vlm_service = vlm_service
         self.text_callback = text_callback  # Callback to send text updates
+        self.pipeline = pipeline
         self.last_frame: Optional[np.ndarray] = None
         self.frame_count = 0
         self.dropped_frames = 0
@@ -162,7 +170,10 @@ class VideoProcessorTrack(VideoStreamTrack):
                     # Convert to PIL Image for VLM
                     pil_img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
                     # Fire and forget - don't wait for result
-                    asyncio.create_task(self.vlm_service.process_frame(pil_img))
+                    if self.pipeline:
+                        asyncio.create_task(self.pipeline.process_frame(pil_img))
+                    else:
+                        asyncio.create_task(self.vlm_service.process_frame(pil_img))
                     logger.info(f"Frame {self.frame_count}: Sending to VLM (interval={interval})")
 
             # Get current response (may be old if VLM is still processing)
