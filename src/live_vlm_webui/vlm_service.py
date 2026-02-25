@@ -25,8 +25,10 @@ import io
 import time
 from openai import AsyncOpenAI
 from PIL import Image
-from typing import Optional
+from typing import Optional, Any
 import logging
+
+from .event_dispatcher import EventDispatcher
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +43,7 @@ class VLMService:
         api_key: str = "EMPTY",
         prompt: str = "Describe what you see in this image in one sentence.",
         max_tokens: int = 512,
+        event_dispatcher: Optional[EventDispatcher] = None,
     ):
         """
         Initialize VLM service
@@ -58,6 +61,7 @@ class VLMService:
         self.prompt = prompt
         self.max_tokens = max_tokens
         self.client = AsyncOpenAI(base_url=api_base, api_key=api_key)
+        self.event_dispatcher = event_dispatcher
         self.current_response = "Initializing..."
         self.is_processing = False
         self._processing_lock = asyncio.Lock()
@@ -145,8 +149,31 @@ class VLMService:
             try:
                 response = await self.analyze_image(image, prompt)
                 self.current_response = response
+                await self._dispatch_single_inference_event(response)
             finally:
                 self.is_processing = False
+
+    async def _dispatch_single_inference_event(self, response: str) -> None:
+        """
+        Dispatch single-frame inference event if dispatcher is configured.
+        Failures are intentionally non-fatal.
+        """
+        if not self.event_dispatcher:
+            return
+
+        payload: dict[str, Any] = {
+            "mode": "single",
+            "text": response,
+            "model": self.model,
+            "api_base": self.api_base,
+        }
+        if self.event_dispatcher.config.include_metrics:
+            payload["metrics"] = self.get_metrics()
+
+        try:
+            await self.event_dispatcher.dispatch(payload, mode="single")
+        except Exception as e:
+            logger.error("Unexpected webhook dispatch error in single mode: %s", e)
 
     def get_current_response(self) -> tuple[str, bool]:
         """
