@@ -7,7 +7,7 @@ import base64
 import io
 import logging
 import time
-from typing import List, Optional
+from typing import List, Optional, Any, Tuple
 
 from PIL import Image
 
@@ -62,11 +62,20 @@ class VideoVLMPipeline:
 
             self.vlm_service.is_processing = True
             try:
+                used_fallback = False
                 if len(selected) == 1:
                     result = await self.vlm_service.analyze_image(selected[0], prompt=prompt)
                 else:
-                    result = await self._analyze_multi_with_fallback(selected, prompt=prompt)
+                    result, used_fallback = await self._analyze_multi_with_fallback(
+                        selected, prompt=prompt
+                    )
                 self.vlm_service.current_response = result
+                await self._dispatch_multi_inference_event(
+                    response=result,
+                    selected_count=len(selected),
+                    buffered_count=len(frames),
+                    used_fallback=used_fallback,
+                )
             except Exception as e:
                 logger.error(f"VideoVLMPipeline inference failed: {e}", exc_info=True)
                 self.vlm_service.current_response = f"Error: {str(e)}"
@@ -75,10 +84,10 @@ class VideoVLMPipeline:
 
     async def _analyze_multi_with_fallback(
         self, frames: List[Image.Image], prompt: Optional[str] = None
-    ) -> str:
+    ) -> Tuple[str, bool]:
         """Try multi-image request first; if unsupported, fallback to per-frame inference."""
         try:
-            return await self._analyze_multi_image(frames, prompt=prompt)
+            return await self._analyze_multi_image(frames, prompt=prompt), False
         except Exception as e:
             logger.warning(
                 f"Multi-image inference failed, using single-image fallback: {e}",
@@ -90,7 +99,39 @@ class VideoVLMPipeline:
                 frame_prompt = f"{frame_prompt}\n\nFrame {i}/{len(frames)}"
                 result = await self.vlm_service.analyze_image(frame, prompt=frame_prompt)
                 results.append(f"[Frame {i}] {result}")
-            return "\n".join(results)
+            return "\n".join(results), True
+
+    async def _dispatch_multi_inference_event(
+        self,
+        response: str,
+        selected_count: int,
+        buffered_count: int,
+        used_fallback: bool,
+    ) -> None:
+        """
+        Dispatch multi-frame inference event if dispatcher is configured.
+        Failures are intentionally non-fatal.
+        """
+        dispatcher = getattr(self.vlm_service, "event_dispatcher", None)
+        if not dispatcher:
+            return
+
+        payload: dict[str, Any] = {
+            "mode": "multi",
+            "text": response,
+            "model": self.vlm_service.model,
+            "api_base": self.vlm_service.api_base,
+            "selected_frame_count": selected_count,
+            "buffered_frame_count": buffered_count,
+            "used_fallback": used_fallback,
+        }
+        if dispatcher.config.include_metrics:
+            payload["metrics"] = self.vlm_service.get_metrics()
+
+        try:
+            await dispatcher.dispatch(payload, mode="multi")
+        except Exception as e:
+            logger.error("Unexpected webhook dispatch error in multi mode: %s", e)
 
     async def _analyze_multi_image(self, frames: List[Image.Image], prompt: Optional[str] = None) -> str:
         """Call OpenAI-compatible chat completion with multiple image_url entries."""
