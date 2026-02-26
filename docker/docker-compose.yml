@@ -275,6 +275,25 @@ services:
               count: all
               capabilities: [gpu, utility]
 
+  # ============================================================================
+  # Action Webhook Receiver (local demo)
+  # ============================================================================
+  action-webhook:
+    build:
+      context: ../services/action-webhook
+      dockerfile: Dockerfile
+    container_name: action-webhook
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+    networks:
+      - vlm-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8081/healthz')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   ollama-data:
     driver: local
@@ -299,4 +318,3 @@ networks:
 # Stop services:
 #   docker compose down
 # ==============================================================================
-
