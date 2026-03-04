@@ -144,3 +144,101 @@ export LIVE_VLM_WEBHOOK_TIMEOUT_SEC=2
 
 1. WebUIで推論を実行すると `action-webhook` 側に `POST /events` の受信ログが出る  
 2. 送信先を不正URLにしても、VLM推論とWebUI更新が継続する
+
+---
+
+## ✅ Issue 7 テスト実行手順（Docker）
+
+ホスト環境のPython差分を避けるため、以下のDockerコマンドで unit test を実行できます。
+
+```bash
+docker run --rm -it \
+  -v "$PWD":/work \
+  -w /work \
+  python:3.11-slim-bullseye \
+  bash -lc "
+    apt-get update &&
+    apt-get install -y --no-install-recommends \
+      libglib2.0-0 libsm6 libxext6 libxrender1 libxcb1 libgl1 &&
+    rm -rf /var/lib/apt/lists/* &&
+    python -m pip install -U pip &&
+    pip install -e '.[dev]' &&
+    python -m pytest tests/unit/test_event_dispatcher.py tests/unit/test_vlm_service_webhook_resilience.py -v
+  "
+```
+
+期待結果:
+- `tests/unit/test_event_dispatcher.py` が PASS
+- `tests/unit/test_vlm_service_webhook_resilience.py` が PASS
+- `2 passed` と表示される
+
+---
+
+## 📘 Issue 8 運用手順（Webhook有効化/無効化/切り戻し）
+
+このセクションは、Webhook連携を安全に運用するための手順です。
+
+### 1) Webhook有効化（ローカル実行）
+
+```bash
+export LIVE_VLM_WEBHOOK_ENABLED=1
+export LIVE_VLM_WEBHOOK_URL=http://localhost:8081/events
+export LIVE_VLM_WEBHOOK_TIMEOUT_SEC=2
+export LIVE_VLM_WEBHOOK_MODE=both
+export LIVE_VLM_WEBHOOK_SAMPLE_EVERY=1
+export LIVE_VLM_WEBHOOK_INCLUDE_METRICS=1
+
+./scripts/start_server.sh
+```
+
+### 2) Webhook無効化（既存挙動に戻す）
+
+```bash
+unset LIVE_VLM_WEBHOOK_ENABLED
+unset LIVE_VLM_WEBHOOK_URL
+unset LIVE_VLM_WEBHOOK_TIMEOUT_SEC
+unset LIVE_VLM_WEBHOOK_MODE
+unset LIVE_VLM_WEBHOOK_SAMPLE_EVERY
+unset LIVE_VLM_WEBHOOK_INCLUDE_METRICS
+
+./scripts/start_server.sh
+```
+
+### 3) 送信失敗時の切り戻し（最短）
+
+1. Webhook設定を無効化（上記 `unset` を実行）  
+2. `start_server.sh` を再起動  
+3. WebUIで推論が継続することを確認
+
+### 4) Docker Composeでの確認手順
+
+```bash
+# 受信側を起動
+docker compose -f docker/docker-compose.yml up -d action-webhook
+
+# 受信ログ確認
+docker compose -f docker/docker-compose.yml logs -f action-webhook
+```
+
+別ターミナルで live-vlm-webui を起動し、推論を実行する。  
+`action-webhook` ログに `POST /events` が出力されれば連携成功。
+
+### 5) 障害時確認（非機能要件）
+
+- `LIVE_VLM_WEBHOOK_URL` を到達不能URLに変更して起動
+- 期待結果:
+  - Webhook送信エラーはログに出る
+  - VLM推論結果のWebUI表示は継続する
+
+### 6) 代表的なトラブルシュート
+
+- 症状: `POST /events` が出ない  
+  - 確認: `LIVE_VLM_WEBHOOK_ENABLED=1` か  
+  - 確認: `LIVE_VLM_WEBHOOK_URL` が正しいか
+
+- 症状: 受信側が起動しない  
+  - 確認: `docker compose ... logs action-webhook`  
+  - 確認: ポート `8081` の競合有無
+
+- 症状: 送信エラーが継続  
+  - 対応: 一時的にWebhookを無効化し、推論機能を優先
