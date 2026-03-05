@@ -148,6 +148,126 @@ export LIVE_VLM_SCENE_THRESHOLD=20.0
 - 不正値は安全なデフォルトにフォールバック（例: timeout/sample）
 - Webhook送信失敗時でもVLM推論とWebUI更新は継続（非機能要件）
 
+### D. 詳細挙動ガイド（FAQ）
+
+#### D-1. マルチフレーム推論モードの実際の流れ
+
+`LIVE_VLM_ENABLE_MULTI_FRAME=1` の場合のみ `VideoVLMPipeline` が生成されます。  
+`0`（または未設定）の場合は従来どおり単一フレーム推論です。
+
+実処理は次の順序です:
+1. `VideoProcessorTrack.recv()` が `process_every_n_frames` 到達時のみ `pipeline.process_frame()` を呼ぶ
+2. pipeline がフレームを `FrameBuffer` に追加
+3. バッファサイズが `LIVE_VLM_TRIGGER_SIZE` 未満なら推論しない
+4. `TRIGGER_SIZE` 到達時に `snapshot()` して **直後に `clear()`**
+5. 取得したフレーム群から代表抽出:
+   - 等間隔抽出（`LIVE_VLM_INTERVAL_STEP`）
+   - シーン変化抽出（`LIVE_VLM_SCENE_THRESHOLD`）
+6. `LIVE_VLM_TARGET_FRAMES` 上限で代表フレームを選んで推論
+7. 複数画像推論失敗時は1枚ずつの fallback 推論
+
+> 注意: 「N番目と N-step 番目を逐次比較する」実装ではありません。  
+> 実装は、`snapshot` したフレーム配列に対するバッチ選択です。
+
+代表抽出の実装詳細:
+- `interval` 抽出と `scene-change` 抽出は**独立に実行**し、最後にマージ（重複除去）します。
+- `interval` は `frames[::step]` で抽出し、末尾フレームが漏れた場合は末尾を追加します。
+- `scene-change` は「先頭フレームをまず採用」し、その後は**直近で採用したフレーム**との差分を見ます（単純な隣接比較でも、常に先頭基準でもありません）。
+- 最終的に `LIVE_VLM_TARGET_FRAMES` 上限で切り詰めます。
+
+`TRIGGER_SIZE=5` の例:
+- `INTERVAL_STEP=1`: interval候補は 5枚
+- `INTERVAL_STEP=2`: interval候補は 1,3,5番目
+- `INTERVAL_STEP=3`: interval候補は 1,4,5番目（末尾補完が入る）
+- `INTERVAL_STEP=4`: interval候補は 1,5番目
+- `INTERVAL_STEP>5`: interval候補は 1番目のみ（末尾補完で5番目も入る場合あり）
+
+`SCENE_THRESHOLD` の補足:
+- 画素差分の平均値（0〜255スケール）で判定します。0〜100に限定されません。
+- しきい値が低いほど採用されやすく、高いほど採用されにくくなります。
+- フレーム群が空でなければ、scene抽出側は最低1枚（先頭）を返します。
+- 代表0枚は通常発生しません（`TARGET_FRAMES<=0` など不正設定は除く）。
+
+推論へ実際に送信されるフレーム数:
+- マルチフレーム推論時の送信枚数は固定値ではなく、代表抽出結果に応じて変動します。
+- 正常設定（`TARGET_FRAMES>0`）かつ `TRIGGER_SIZE` 到達済みであれば、通常0枚にはなりません。
+- 実際の送信枚数は概ね `1 〜 min(TARGET_FRAMES, 抽出結果枚数)` の範囲になります。
+
+#### D-2. バッファの方式（```LIVE_VLM_BUFFER_SIZE```）
+
+- `FrameBuffer` は `deque(maxlen=BUFFER_SIZE)` を使うため **キュー方式** です。
+- 上限超過時は最古フレームが自動的に捨てられます。
+- ただし通常フローでは `TRIGGER_SIZE` 到達時に `clear()` されるため、毎回空に戻ります。
+- `BUFFER_SIZE=TRIGGER_SIZE` は問題ありません。
+- `BUFFER_SIZE<TRIGGER_SIZE` は実質ミスコンフィグで、到達不能のため推論が起きません（例外ではなく、待機し続ける挙動）。
+
+#### D-3. `TRIGGER_SIZE` と `TARGET_FRAMES` の関係
+
+- `TRIGGER_SIZE`: 「何枚たまったら推論開始するか」
+- `TARGET_FRAMES`: 「推論に何枚まで渡すか」
+
+例:
+- `TRIGGER_SIZE=4`, `TARGET_FRAMES=3`
+  - 4枚たまったら推論開始
+  - 代表抽出で最大3枚をVLMへ送信
+- `TRIGGER_SIZE=4`, `TARGET_FRAMES=5`
+  - 4枚たまったら推論開始
+  - 送信枚数は最大4枚（存在しない5枚目は送れない）
+  - 例外にはならない
+
+#### D-4. 処理後のバッファ
+
+- 推論実行前に `snapshot + clear` されるため、使用したフレームはバッファから除去されます。
+
+#### D-5. シングルフレーム推論モード
+
+- `LIVE_VLM_ENABLE_MULTI_FRAME=0` のとき、追加した動画パイプラインは使用されません。
+- 従来どおり `vlm_service.process_frame()` が呼ばれます。
+- マルチフレーム関連の環境変数は、pipeline未生成のため実行時には効きません。
+
+#### D-6. Webhook環境変数の挙動
+
+- `LIVE_VLM_WEBHOOK_TIMEOUT_SEC`
+  - 単位は秒です（ミリ秒ではない）。
+  - HTTPリクエスト全体のタイムアウトとして扱われます。
+
+- `LIVE_VLM_WEBHOOK_MODE`
+  - `both`: single/multi 両イベントを送信対象
+  - `single`: singleイベントのみ送信（multiイベントは送らない）
+  - `multi`: multiイベントのみ送信（singleイベントは送らない）
+
+`LIVE_VLM_ENABLE_MULTI_FRAME` との組み合わせ:
+- `WEBHOOK_MODE=single` かつ `ENABLE_MULTI_FRAME=1`
+  - 実行される推論は multi 経路なので、送信対象モード不一致で基本送信されない
+- `WEBHOOK_MODE=multi` かつ `ENABLE_MULTI_FRAME=0`
+  - single 経路しか実行されないため、基本送信されない
+- `WEBHOOK_MODE=both`
+  - 実行された推論モードに応じて送信される
+
+- `LIVE_VLM_WEBHOOK_SAMPLE_EVERY`
+  - 「対象モードのイベントを N件に1回送信」の意味です。
+  - `1`: 毎回送信
+  - `3`: 1,2件目はスキップ、3件目送信（以降 6,9...）
+  - カウントは `WEBHOOK_MODE` に一致したイベントだけが対象です（single/multi混在時に mode 絞り込み後でカウント）。
+
+#### D-7. デフォルト値（未設定時）
+
+- マルチフレーム:
+  - `LIVE_VLM_ENABLE_MULTI_FRAME=0`（無効）
+  - `BUFFER_SIZE=16`
+  - `TRIGGER_SIZE=4`
+  - `TARGET_FRAMES=4`
+  - `INTERVAL_STEP=1`
+  - `SCENE_THRESHOLD=20.0`
+
+- Webhook:
+  - `LIVE_VLM_WEBHOOK_ENABLED=0`（無効）
+  - `LIVE_VLM_WEBHOOK_URL=""`
+  - `LIVE_VLM_WEBHOOK_TIMEOUT_SEC=2.0`
+  - `LIVE_VLM_WEBHOOK_MODE=both`
+  - `LIVE_VLM_WEBHOOK_SAMPLE_EVERY=1`
+  - `LIVE_VLM_WEBHOOK_INCLUDE_METRICS=1`
+
 ---
 
 ## 🔎 動作確認チェックリスト
