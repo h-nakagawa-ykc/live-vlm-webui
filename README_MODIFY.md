@@ -414,3 +414,10 @@ docker compose -f docker/docker-compose.yml logs -f action-webhook
 
 - 症状: 送信エラーが継続  
   - 対応: 一時的にWebhookを無効化し、推論機能を優先
+
+---
+
+## 🗺️ 今後の開発方針（MVP〜拡張）
+
+- 追加機能の実装計画・PR分割・デモシナリオは以下を参照:
+  - `docs/development/action-orchestration-roadmap-ja.md`

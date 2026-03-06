@@ -1,9 +1,16 @@
 import json
 import logging
 from datetime import datetime, timezone
+from contextlib import asynccontextmanager
 from typing import Any, Dict
 
+import aiohttp
 from fastapi import FastAPI, Request
+
+from actions.device_http import DeviceHttpClient
+from actions.slack import SlackNotifier
+from config import ActionWebhookConfig, load_action_webhook_config
+from rules import RuleEvaluator
 
 logging.basicConfig(
     level=logging.INFO,
@@ -11,7 +18,37 @@ logging.basicConfig(
 )
 logger = logging.getLogger("action-webhook")
 
-app = FastAPI(title="action-webhook", version="0.1.0")
+config: ActionWebhookConfig = load_action_webhook_config()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    session = aiohttp.ClientSession()
+    app.state.rule_evaluator = RuleEvaluator(risk_threshold=config.risk_threshold)
+    app.state.slack_notifier = SlackNotifier(
+        webhook_url=config.slack_webhook_url,
+        session=session,
+        timeout_sec=config.device_timeout_sec,
+    )
+    app.state.device_client = DeviceHttpClient(
+        endpoint_url=config.device_endpoint_url,
+        session=session,
+        timeout_sec=config.device_timeout_sec,
+    )
+    app.state.http_session = session
+
+    logger.info(
+        "action-webhook started rules_enabled=%s risk_threshold=%.2f",
+        config.rules_enabled,
+        config.risk_threshold,
+    )
+    try:
+        yield
+    finally:
+        await session.close()
+
+
+app = FastAPI(title="action-webhook", version="0.2.0", lifespan=lifespan)
 
 
 @app.get("/healthz")
@@ -35,8 +72,36 @@ async def events(request: Request) -> Dict[str, Any]:
         json.dumps(payload, ensure_ascii=True),
     )
 
+    matched_rule_ids = []
+    actions = []
+    action_results: Dict[str, Any] = {}
+    derived: Dict[str, Any] = {}
+
+    if config.rules_enabled:
+        result = request.app.state.rule_evaluator.evaluate(payload)
+        matched_rule_ids = result.matched_rule_ids
+        actions = result.actions
+        derived = result.derived
+
+        if "slack" in actions:
+            action_results["slack"] = await request.app.state.slack_notifier.send(
+                payload=payload,
+                matched_rule_ids=matched_rule_ids,
+            )
+
+        if "device" in actions:
+            action_results["device"] = await request.app.state.device_client.post(
+                payload=payload,
+                matched_rule_ids=matched_rule_ids,
+            )
+
     return {
         "status": "accepted",
         "event_id": event_id,
         "received_at": received_at,
+        "rules_enabled": config.rules_enabled,
+        "matched_rule_ids": matched_rule_ids,
+        "actions": actions,
+        "derived": derived,
+        "action_results": action_results,
     }
