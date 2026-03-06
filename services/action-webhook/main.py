@@ -24,7 +24,10 @@ config: ActionWebhookConfig = load_action_webhook_config()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     session = aiohttp.ClientSession()
-    app.state.rule_evaluator = RuleEvaluator(risk_threshold=config.risk_threshold)
+    app.state.rule_evaluator = RuleEvaluator(
+        risk_threshold=config.risk_threshold,
+        rules_file=config.rules_file,
+    )
     app.state.slack_notifier = SlackNotifier(
         webhook_url=config.slack_webhook_url,
         session=session,
@@ -38,9 +41,10 @@ async def lifespan(app: FastAPI):
     app.state.http_session = session
 
     logger.info(
-        "action-webhook started rules_enabled=%s risk_threshold=%.2f",
+        "action-webhook started rules_enabled=%s risk_threshold=%.2f rules_file=%s",
         config.rules_enabled,
         config.risk_threshold,
+        config.rules_file,
     )
     try:
         yield
