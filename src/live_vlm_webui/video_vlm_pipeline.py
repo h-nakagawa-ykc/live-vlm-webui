@@ -116,15 +116,15 @@ class VideoVLMPipeline:
         if not dispatcher:
             return
 
-        payload: dict[str, Any] = {
-            "mode": "multi",
-            "text": response,
-            "model": self.vlm_service.model,
-            "api_base": self.vlm_service.api_base,
-            "selected_frame_count": selected_count,
-            "buffered_frame_count": buffered_count,
-            "used_fallback": used_fallback,
-        }
+        payload = self.vlm_service.build_webhook_payload(
+            response=response,
+            mode="multi",
+            extra_fields={
+                "selected_frame_count": selected_count,
+                "buffered_frame_count": buffered_count,
+                "used_fallback": used_fallback,
+            },
+        )
         if dispatcher.config.include_metrics:
             payload["metrics"] = self.vlm_service.get_metrics()
 

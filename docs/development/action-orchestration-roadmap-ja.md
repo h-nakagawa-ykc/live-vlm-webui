@@ -81,6 +81,10 @@ VLMへの指示は「JSON固定フォーマット」を優先:
 - `src/live_vlm_webui/vlm_service.py` or `video_vlm_pipeline.py` で `risk_score` などを詰める
 - `docs/development/webhook-events.md` 更新
 - `tests/unit` に payload互換テスト追加
+- 実装メモ:
+  - `inference_prompt_id` は既定で prompt 文字列から `sha256:<16hex>` を生成
+  - `LIVE_VLM_INFERENCE_PROMPT_ID` 設定時は上書き
+  - `camera_id` / `stream_id` は `LIVE_VLM_CAMERA_ID` / `LIVE_VLM_STREAM_ID` または RTSP/WebRTC の `session_id` から設定
 
 ### PR-3: ルール外部化（JSON/YAML）
 - 固定if文から設定駆動へ移行

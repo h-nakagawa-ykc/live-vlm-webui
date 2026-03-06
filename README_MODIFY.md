@@ -142,6 +142,18 @@ export LIVE_VLM_SCENE_THRESHOLD=20.0
   - 値: `1` で含む / `0` で含まない
   - 変化: 有効時は `latency` などを受信側で利用可能
 
+- `LIVE_VLM_CAMERA_ID`
+  - 意味: payloadへ付与する入力ソース識別子（任意）
+  - 変化: 設定時は webhook payload に `camera_id` を含める
+
+- `LIVE_VLM_STREAM_ID`
+  - 意味: payloadへ付与するストリーム識別子（任意）
+  - 変化: 設定時は webhook payload に `stream_id` を含める（RTSP/WebRTCの `session_id` で上書きされる場合あり）
+
+- `LIVE_VLM_INFERENCE_PROMPT_ID`
+  - 意味: payloadへ付与するプロンプト識別子（任意）
+  - 変化: 未設定時は現在プロンプト文字列から `sha256:<16hex>` を自動生成
+
 ### C. 設定変更時の注意
 
 - 環境変数はサーバ起動時に読み込まれるため、値変更後は再起動が必要

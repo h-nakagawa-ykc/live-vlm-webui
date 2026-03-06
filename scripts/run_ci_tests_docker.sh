@@ -21,7 +21,7 @@ PY_IMAGE="${PY_IMAGE:-python:3.11-slim-bullseye}"
 if [ "$#" -gt 0 ]; then
   TEST_TARGETS="$*"
 else
-  TEST_TARGETS="tests/unit/test_event_dispatcher.py tests/unit/test_vlm_service_webhook_resilience.py tests/unit/test_action_webhook_rules.py"
+  TEST_TARGETS="tests/unit/test_event_dispatcher.py tests/unit/test_vlm_service_webhook_resilience.py tests/unit/test_action_webhook_rules.py tests/unit/test_webhook_payload_v11.py"
 fi
 
 echo "Running CI-like tests in Docker"

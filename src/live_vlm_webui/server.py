@@ -489,6 +489,11 @@ async def offer(request):
     params = await request.json()
     offer_sdp = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
     rtsp_url = params.get("rtsp_url")  # Optional RTSP URL for IP camera mode
+    session_id = params.get("session_id", "webrtc")
+    camera_id = params.get("camera_id")
+
+    if vlm_service:
+        vlm_service.set_stream_context(stream_id=session_id, camera_id=camera_id)
 
     # Create RTCPeerConnection with STUN servers for Docker/NAT compatibility
     config = RTCConfiguration(
@@ -606,6 +611,7 @@ async def rtsp_start(request):
         data = await request.json()
         rtsp_url = data.get("rtsp_url")
         session_id = data.get("session_id", "default")
+        camera_id = data.get("camera_id")
 
         if not rtsp_url:
             logger.warning("RTSP start request missing rtsp_url")
@@ -621,6 +627,8 @@ async def rtsp_start(request):
             await _stop_rtsp_session(session_id)
 
         logger.info(f"Starting RTSP stream for session {session_id}")
+        if vlm_service:
+            vlm_service.set_stream_context(stream_id=session_id, camera_id=camera_id)
 
         # Create RTSP video track
         try:
@@ -1091,12 +1099,18 @@ def main():
 
     # Initialize VLM service
     global vlm_service
+    camera_id = os.getenv("LIVE_VLM_CAMERA_ID", "").strip()
+    stream_id = os.getenv("LIVE_VLM_STREAM_ID", "").strip()
+    inference_prompt_id = os.getenv("LIVE_VLM_INFERENCE_PROMPT_ID", "").strip() or None
     vlm_service = VLMService(
         model=model,
         api_base=api_base,
         api_key=api_key,
         prompt=args.prompt,
         event_dispatcher=event_dispatcher,
+        camera_id=camera_id,
+        stream_id=stream_id,
+        inference_prompt_id=inference_prompt_id,
     )
 
     # Log initialization with better formatting
