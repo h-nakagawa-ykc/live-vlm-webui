@@ -44,6 +44,7 @@ pytest
 | `test_coverage.sh` | Generate coverage report | Before PR, check test coverage |
 | `run_performance_tests.sh` | Performance benchmarks | After optimization, before release |
 | `pre_commit_check.sh` | Format + lint + test | Before committing code |
+| `run_ci_tests_docker.sh` | CI-like tests in Python 3.11 Docker | Local Python version mismatch workaround |
 | `profile_code.sh` | Profile for bottlenecks | When optimizing performance |
 
 ## Common Workflows
@@ -259,6 +260,26 @@ mypy src/ --ignore-missing-imports --strict
 # Install dev dependencies
 pip install -r requirements-dev.txt
 
+## Docker-Based CI-like Test Run (Python 3.11)
+
+Use this when local Python is older than project requirements (for example, Python 3.7):
+
+```bash
+./scripts/run_ci_tests_docker.sh
+```
+
+Run specific test targets:
+
+```bash
+./scripts/run_ci_tests_docker.sh tests/unit/test_action_webhook_rules.py
+```
+
+Use a different Python Docker image:
+
+```bash
+PY_IMAGE=python:3.12-slim-bullseye ./scripts/run_ci_tests_docker.sh
+```
+
 # Install package in editable mode
 pip install -e .
 
@@ -371,4 +392,3 @@ The test suite runs automatically on GitHub Actions:
 ```
 
 That's it! Happy testing! 🧪🚀
-
