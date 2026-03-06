@@ -6,6 +6,9 @@ COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
 COPY main.py /app/main.py
+COPY config.py /app/config.py
+COPY rules.py /app/rules.py
+COPY actions /app/actions
 
 EXPOSE 8081
 
