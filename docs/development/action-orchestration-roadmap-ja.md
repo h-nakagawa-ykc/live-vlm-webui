@@ -88,8 +88,9 @@ VLMへの指示は「JSON固定フォーマット」を優先:
 
 ### PR-3: ルール外部化（JSON/YAML）
 - 固定if文から設定駆動へ移行
-- 例: `services/action-webhook/config/rules.yaml`
+- 例: `services/action-webhook/rule_configs/rules.yaml`
 - ノーコードでデモシナリオを差し替え可能にする
+- `ACTION_RULES_FILE` 環境変数で読み込むルールファイルを差し替え可能にする
 
 ## 6. デモシナリオ（インパクト重視）
 - Demo-1: 侵入検知風
