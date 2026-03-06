@@ -70,6 +70,9 @@ We provide convenient shell scripts in the `scripts/` directory:
 
 # Pre-commit checks (formatting, linting, tests)
 ./scripts/pre_commit_check.sh
+
+# CI-like unit tests in Docker (Python 3.11)
+./scripts/run_ci_tests_docker.sh
 ```
 
 ## Test Markers

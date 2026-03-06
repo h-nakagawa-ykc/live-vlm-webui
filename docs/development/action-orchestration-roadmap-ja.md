@@ -110,6 +110,7 @@ VLMへの指示は「JSON固定フォーマット」を優先:
 - Unit:
   - ルール判定（yes/no, keyword, risk閾値）
   - JSON parse成功/失敗時のフォールバック
+  - ローカルPython差分対策として `./scripts/run_ci_tests_docker.sh` で Python 3.11 実行経路を用意
 - Integration:
   - webhook受信 -> Slack notifier mock -> device client mock
 - E2E:
