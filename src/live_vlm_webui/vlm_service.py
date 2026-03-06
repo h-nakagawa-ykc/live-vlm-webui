@@ -21,7 +21,9 @@ Handles async image analysis using any OpenAI-compatible VLM API
 
 import asyncio
 import base64
+import hashlib
 import io
+import json
 import time
 from openai import AsyncOpenAI
 from PIL import Image
@@ -44,6 +46,9 @@ class VLMService:
         prompt: str = "Describe what you see in this image in one sentence.",
         max_tokens: int = 512,
         event_dispatcher: Optional[EventDispatcher] = None,
+        camera_id: str = "",
+        stream_id: str = "",
+        inference_prompt_id: Optional[str] = None,
     ):
         """
         Initialize VLM service
@@ -65,6 +70,13 @@ class VLMService:
         self.current_response = "Initializing..."
         self.is_processing = False
         self._processing_lock = asyncio.Lock()
+        self.camera_id = camera_id.strip()
+        self.stream_id = stream_id.strip()
+        self.inference_prompt_id = (
+            inference_prompt_id.strip()
+            if inference_prompt_id and inference_prompt_id.strip()
+            else self._derive_prompt_id(self.prompt)
+        )
 
         # Metrics tracking
         self.last_inference_time = 0.0  # seconds
@@ -161,12 +173,7 @@ class VLMService:
         if not self.event_dispatcher:
             return
 
-        payload: dict[str, Any] = {
-            "mode": "single",
-            "text": response,
-            "model": self.model,
-            "api_base": self.api_base,
-        }
+        payload = self.build_webhook_payload(response=response, mode="single")
         if self.event_dispatcher.config.include_metrics:
             payload["metrics"] = self.get_metrics()
 
@@ -211,11 +218,21 @@ class VLMService:
             max_tokens: Maximum tokens to generate (optional)
         """
         self.prompt = new_prompt
+        self.inference_prompt_id = self._derive_prompt_id(new_prompt)
         if max_tokens is not None:
             self.max_tokens = max_tokens
             logger.info(f"Updated prompt to: {new_prompt}, max_tokens: {max_tokens}")
         else:
             logger.info(f"Updated prompt to: {new_prompt}")
+
+    def set_stream_context(
+        self, stream_id: Optional[str] = None, camera_id: Optional[str] = None
+    ) -> None:
+        """Update optional source context for webhook payload enrichment."""
+        if stream_id is not None:
+            self.stream_id = str(stream_id).strip()
+        if camera_id is not None:
+            self.camera_id = str(camera_id).strip()
 
     def update_api_settings(
         self, api_base: Optional[str] = None, api_key: Optional[str] = None
@@ -241,3 +258,78 @@ class VLMService:
             else "EMPTY"
         )
         logger.info(f"Updated API settings - base: {self.api_base}, key: {masked_key}")
+
+    def build_webhook_payload(
+        self, response: str, mode: str, extra_fields: Optional[dict[str, Any]] = None
+    ) -> dict[str, Any]:
+        """
+        Build v1.1-compatible webhook payload while preserving backward compatibility.
+        New fields are optional and only populated when values are available.
+        """
+        payload: dict[str, Any] = {
+            "mode": mode,
+            "text": response,
+            "model": self.model,
+            "api_base": self.api_base,
+        }
+
+        parsed = self._extract_structured_fields(response)
+        if parsed["risk_score"] is not None:
+            payload["risk_score"] = parsed["risk_score"]
+        if parsed["labels"]:
+            payload["labels"] = parsed["labels"]
+
+        if self.camera_id:
+            payload["camera_id"] = self.camera_id
+        if self.stream_id:
+            payload["stream_id"] = self.stream_id
+        if self.inference_prompt_id:
+            payload["inference_prompt_id"] = self.inference_prompt_id
+
+        if extra_fields:
+            payload.update(extra_fields)
+        return payload
+
+    @staticmethod
+    def _derive_prompt_id(prompt: str) -> str:
+        digest = hashlib.sha256((prompt or "").encode("utf-8")).hexdigest()[:16]
+        return f"sha256:{digest}"
+
+    @staticmethod
+    def _extract_structured_fields(response: str) -> dict[str, Any]:
+        """
+        Extract optional structured fields from JSON-like VLM output.
+        Expected keys:
+        - risk_score: float in [0.0, 1.0]
+        - labels: array of strings
+        """
+        if not response:
+            return {"risk_score": None, "labels": []}
+
+        text = response.strip()
+        if not text.startswith("{"):
+            return {"risk_score": None, "labels": []}
+
+        try:
+            obj = json.loads(text)
+        except json.JSONDecodeError:
+            return {"risk_score": None, "labels": []}
+        if not isinstance(obj, dict):
+            return {"risk_score": None, "labels": []}
+
+        risk_score = None
+        risk_raw = obj.get("risk_score")
+        if risk_raw is not None:
+            try:
+                risk_val = float(risk_raw)
+                if 0.0 <= risk_val <= 1.0:
+                    risk_score = risk_val
+            except (TypeError, ValueError):
+                risk_score = None
+
+        labels: list[str] = []
+        labels_raw = obj.get("labels")
+        if isinstance(labels_raw, list):
+            labels = [str(v) for v in labels_raw if isinstance(v, str) and v.strip()]
+
+        return {"risk_score": risk_score, "labels": labels}
