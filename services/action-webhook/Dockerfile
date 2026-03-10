@@ -9,6 +9,7 @@ COPY main.py /app/main.py
 COPY config.py /app/config.py
 COPY rules.py /app/rules.py
 COPY actions /app/actions
+COPY rule_configs /app/rule_configs
 
 EXPOSE 8081
 

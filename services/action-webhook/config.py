@@ -9,6 +9,7 @@ class ActionWebhookConfig:
     device_endpoint_url: str = ""
     device_timeout_sec: float = 2.0
     risk_threshold: float = 0.75
+    rules_file: str = "rule_configs/rules.yaml"
 
 
 def _env_bool(name: str, default: bool = False) -> bool:
@@ -45,4 +46,6 @@ def load_action_webhook_config() -> ActionWebhookConfig:
         device_endpoint_url=os.getenv("DEVICE_ENDPOINT_URL", "").strip(),
         device_timeout_sec=device_timeout_sec,
         risk_threshold=risk_threshold,
+        rules_file=os.getenv("ACTION_RULES_FILE", "rule_configs/rules.yaml").strip()
+        or "rule_configs/rules.yaml",
     )

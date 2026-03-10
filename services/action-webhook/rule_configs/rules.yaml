@@ -1,0 +1,25 @@
+version: 1
+rules:
+  - id: rule_yes
+    enabled: true
+    when:
+      answer_in: ["yes"]
+    actions: ["slack", "device"]
+
+  - id: rule_no
+    enabled: true
+    when:
+      answer_in: ["no"]
+    actions: ["slack"]
+
+  - id: rule_keyword_alert
+    enabled: true
+    when:
+      text_contains_any: ["ALERT", "WARNING", "CAUTION"]
+    actions: ["slack"]
+
+  - id: rule_risk_high
+    enabled: true
+    when:
+      risk_score_gte: "${RISK_THRESHOLD}"
+    actions: ["slack"]
