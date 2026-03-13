@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <rect width="1600" height="900" fill="#f4f8ff"/>
+  <text x="60" y="92" font-family="Noto Sans CJK JP, sans-serif" font-size="48" fill="#163a70" font-weight="700">action-webhook のルール判定とアクション</text>
+
+  <rect x="70" y="150" width="720" height="700" rx="20" fill="#ffffff" stroke="#c5d8f3" stroke-width="3"/>
+  <text x="110" y="215" font-family="Noto Sans CJK JP, sans-serif" font-size="34" fill="#24508c" font-weight="700">デフォルトルール</text>
+
+  <rect x="110" y="255" width="640" height="110" rx="12" fill="#e9f3ff"/>
+  <text x="130" y="305" font-family="Noto Sans CJK JP, sans-serif" font-size="29" fill="#1d467e">Rule YES: answer=yes -> slack + device</text>
+  <text x="130" y="342" font-family="Noto Sans CJK JP, sans-serif" font-size="24" fill="#345f93">rule_id: rule_yes</text>
+
+  <rect x="110" y="385" width="640" height="110" rx="12" fill="#e9f3ff"/>
+  <text x="130" y="435" font-family="Noto Sans CJK JP, sans-serif" font-size="29" fill="#1d467e">Rule NO: answer=no -> slack</text>
+  <text x="130" y="472" font-family="Noto Sans CJK JP, sans-serif" font-size="24" fill="#345f93">rule_id: rule_no</text>
+
+  <rect x="110" y="515" width="640" height="110" rx="12" fill="#e9f3ff"/>
+  <text x="130" y="565" font-family="Noto Sans CJK JP, sans-serif" font-size="29" fill="#1d467e">Rule KEYWORD: ALERT/WARNING/CAUTION -> slack</text>
+  <text x="130" y="602" font-family="Noto Sans CJK JP, sans-serif" font-size="24" fill="#345f93">rule_id: rule_keyword_alert</text>
+
+  <rect x="110" y="645" width="640" height="110" rx="12" fill="#e9f3ff"/>
+  <text x="130" y="695" font-family="Noto Sans CJK JP, sans-serif" font-size="29" fill="#1d467e">Rule RISK: risk_score >= threshold -> slack</text>
+  <text x="130" y="732" font-family="Noto Sans CJK JP, sans-serif" font-size="24" fill="#345f93">rule_id: rule_risk_high</text>
+
+  <rect x="830" y="150" width="700" height="700" rx="20" fill="#ffffff" stroke="#d9d2f0" stroke-width="3"/>
+  <text x="870" y="215" font-family="Noto Sans CJK JP, sans-serif" font-size="34" fill="#4b3a8c" font-weight="700">検証ステータス（Docker実行）</text>
+
+  <text x="870" y="285" font-family="Noto Sans CJK JP, sans-serif" font-size="30" fill="#334">- 対象: webhook関連 unit/integration</text>
+  <text x="870" y="335" font-family="Noto Sans CJK JP, sans-serif" font-size="30" fill="#334">- 結果: 9 passed / 2 failed / 3 skipped</text>
+
+  <rect x="870" y="380" width="620" height="170" rx="12" fill="#fff1f1" stroke="#d58b8b" stroke-width="2"/>
+  <text x="900" y="435" font-family="Noto Sans CJK JP, sans-serif" font-size="28" fill="#8b2a2a" font-weight="700">要対応ギャップ</text>
+  <text x="900" y="482" font-family="Noto Sans CJK JP, sans-serif" font-size="27" fill="#7b2c2c">risk_score を payload直値で評価する期待と</text>
+  <text x="900" y="524" font-family="Noto Sans CJK JP, sans-serif" font-size="27" fill="#7b2c2c">rules.py 実装の抽出ロジックに不整合</text>
+
+  <rect x="870" y="580" width="620" height="220" rx="12" fill="#f0fff1" stroke="#7fb88b" stroke-width="2"/>
+  <text x="900" y="636" font-family="Noto Sans CJK JP, sans-serif" font-size="28" fill="#2e6b3a" font-weight="700">MVPデモ運用への影響</text>
+  <text x="900" y="682" font-family="Noto Sans CJK JP, sans-serif" font-size="26" fill="#2f5f38">- yes/no と keyword ルートは動作確認済み</text>
+  <text x="900" y="724" font-family="Noto Sans CJK JP, sans-serif" font-size="26" fill="#2f5f38">- risk_score 判定の修正をデモ前に実施推奨</text>
+  <text x="900" y="766" font-family="Noto Sans CJK JP, sans-serif" font-size="26" fill="#2f5f38">- 非致命設計のため本体推論は継続可能</text>
+</svg>

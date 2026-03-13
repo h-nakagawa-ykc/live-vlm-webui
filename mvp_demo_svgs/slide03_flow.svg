@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <rect width="1600" height="900" fill="#fffefb"/>
+  <text x="60" y="90" font-family="Noto Sans CJK JP, sans-serif" font-size="48" fill="#5a3e1b" font-weight="700">推論からWebhook通知までの時系列フロー</text>
+
+  <rect x="90" y="150" width="1420" height="650" rx="18" fill="#fff" stroke="#e1d3bc" stroke-width="3"/>
+
+  <circle cx="170" cy="240" r="36" fill="#f4b183"/><text x="155" y="252" font-family="Noto Sans CJK JP, sans-serif" font-size="28" fill="#fff" font-weight="700">1</text>
+  <text x="235" y="252" font-family="Noto Sans CJK JP, sans-serif" font-size="31" fill="#6b4620">カメラフレーム受信（WebRTC/RTSP）</text>
+
+  <circle cx="170" cy="330" r="36" fill="#f4b183"/><text x="155" y="342" font-family="Noto Sans CJK JP, sans-serif" font-size="28" fill="#fff" font-weight="700">2</text>
+  <text x="235" y="342" font-family="Noto Sans CJK JP, sans-serif" font-size="31" fill="#6b4620">process_every間隔で推論投入（single または multi）</text>
+
+  <circle cx="170" cy="420" r="36" fill="#f4b183"/><text x="155" y="432" font-family="Noto Sans CJK JP, sans-serif" font-size="28" fill="#fff" font-weight="700">3</text>
+  <text x="235" y="432" font-family="Noto Sans CJK JP, sans-serif" font-size="31" fill="#6b4620">VLM応答生成（text） + 構造化情報抽出（risk_score, labels）</text>
+
+  <circle cx="170" cy="510" r="36" fill="#f4b183"/><text x="155" y="522" font-family="Noto Sans CJK JP, sans-serif" font-size="28" fill="#fff" font-weight="700">4</text>
+  <text x="235" y="522" font-family="Noto Sans CJK JP, sans-serif" font-size="31" fill="#6b4620">UIへWebSocket配信 + Webhook payload組み立て（v1.1）</text>
+
+  <circle cx="170" cy="600" r="36" fill="#f4b183"/><text x="155" y="612" font-family="Noto Sans CJK JP, sans-serif" font-size="28" fill="#fff" font-weight="700">5</text>
+  <text x="235" y="612" font-family="Noto Sans CJK JP, sans-serif" font-size="31" fill="#6b4620">action-webhookで受信、ルール評価、Slack/Device実行</text>
+
+  <circle cx="170" cy="690" r="36" fill="#f4b183"/><text x="155" y="702" font-family="Noto Sans CJK JP, sans-serif" font-size="28" fill="#fff" font-weight="700">6</text>
+  <text x="235" y="702" font-family="Noto Sans CJK JP, sans-serif" font-size="31" fill="#6b4620">通知失敗時も推論処理は継続（MVPの非機能要件）</text>
+
+  <line x1="170" y1="276" x2="170" y2="294" stroke="#b97f44" stroke-width="5"/>
+  <line x1="170" y1="366" x2="170" y2="384" stroke="#b97f44" stroke-width="5"/>
+  <line x1="170" y1="456" x2="170" y2="474" stroke="#b97f44" stroke-width="5"/>
+  <line x1="170" y1="546" x2="170" y2="564" stroke="#b97f44" stroke-width="5"/>
+  <line x1="170" y1="636" x2="170" y2="654" stroke="#b97f44" stroke-width="5"/>
+</svg>

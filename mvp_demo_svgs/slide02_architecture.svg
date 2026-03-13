@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <rect width="1600" height="900" fill="#f6f9fc"/>
+  <text x="70" y="90" font-family="Noto Sans CJK JP, sans-serif" font-size="48" fill="#133b5c" font-weight="700">全体アーキテクチャ（現状実装）</text>
+
+  <rect x="80" y="150" width="420" height="250" rx="16" fill="#d6ecff" stroke="#3f83c7" stroke-width="3"/>
+  <text x="110" y="210" font-family="Noto Sans CJK JP, sans-serif" font-size="30" fill="#0f4e7a" font-weight="700">Input</text>
+  <text x="110" y="260" font-family="Noto Sans CJK JP, sans-serif" font-size="28" fill="#123a57">- WebRTC Camera</text>
+  <text x="110" y="305" font-family="Noto Sans CJK JP, sans-serif" font-size="28" fill="#123a57">- RTSP Stream</text>
+  <text x="110" y="350" font-family="Noto Sans CJK JP, sans-serif" font-size="24" fill="#1b5f8f">server.py / video_processor.py</text>
+
+  <rect x="560" y="150" width="460" height="300" rx="16" fill="#e4f7e8" stroke="#42a35c" stroke-width="3"/>
+  <text x="590" y="210" font-family="Noto Sans CJK JP, sans-serif" font-size="30" fill="#1f6d36" font-weight="700">Inference Core</text>
+  <text x="590" y="260" font-family="Noto Sans CJK JP, sans-serif" font-size="27" fill="#1f5b31">- Single: VLMService</text>
+  <text x="590" y="305" font-family="Noto Sans CJK JP, sans-serif" font-size="27" fill="#1f5b31">- Multi: VideoVLMPipeline</text>
+  <text x="590" y="350" font-family="Noto Sans CJK JP, sans-serif" font-size="27" fill="#1f5b31">  FrameBuffer + FrameSelector</text>
+  <text x="590" y="400" font-family="Noto Sans CJK JP, sans-serif" font-size="24" fill="#2e7f44">src/live_vlm_webui/*.py</text>
+
+  <rect x="1080" y="150" width="440" height="300" rx="16" fill="#fff5d7" stroke="#c59226" stroke-width="3"/>
+  <text x="1110" y="210" font-family="Noto Sans CJK JP, sans-serif" font-size="30" fill="#8a5a00" font-weight="700">Webhook / Action</text>
+  <text x="1110" y="260" font-family="Noto Sans CJK JP, sans-serif" font-size="27" fill="#7a4f00">- EventDispatcher (送信)</text>
+  <text x="1110" y="305" font-family="Noto Sans CJK JP, sans-serif" font-size="27" fill="#7a4f00">- action-webhook (受信)</text>
+  <text x="1110" y="350" font-family="Noto Sans CJK JP, sans-serif" font-size="27" fill="#7a4f00">- Slack / Device HTTP</text>
+  <text x="1110" y="400" font-family="Noto Sans CJK JP, sans-serif" font-size="24" fill="#8e640e">services/action-webhook/*</text>
+
+  <rect x="80" y="520" width="1440" height="280" rx="16" fill="#ffffff" stroke="#d0d9e3" stroke-width="2"/>
+  <text x="120" y="585" font-family="Noto Sans CJK JP, sans-serif" font-size="33" fill="#2b3f55" font-weight="700">実装上のポイント</text>
+  <text x="130" y="640" font-family="Noto Sans CJK JP, sans-serif" font-size="28" fill="#33495f">- 既定では従来互換（single推論）。環境変数でmulti/webhookを有効化</text>
+  <text x="130" y="690" font-family="Noto Sans CJK JP, sans-serif" font-size="28" fill="#33495f">- Webhook失敗は非致命（推論・UI更新は継続）</text>
+  <text x="130" y="740" font-family="Noto Sans CJK JP, sans-serif" font-size="28" fill="#33495f">- payload v1.1で risk_score / labels / camera_id 等を拡張</text>
+
+  <line x1="500" y1="275" x2="560" y2="275" stroke="#355a7a" stroke-width="4"/>
+  <polygon points="560,275 545,266 545,284" fill="#355a7a"/>
+  <line x1="1020" y1="300" x2="1080" y2="300" stroke="#355a7a" stroke-width="4"/>
+  <polygon points="1080,300 1065,291 1065,309" fill="#355a7a"/>
+</svg>
