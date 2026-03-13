@@ -1,0 +1,42 @@
+version: 1
+rules:
+  - id: rule_yes
+    enabled: true
+    # VLM応答に"yes"が含まれる場合に有効化される
+    when:
+      answer_in: ["yes"]
+    # 実行アクションは”slack”（slack webhook通知）と"device"（IP制御機器へのリクエスト送信）
+    actions: ["slack", "device"]
+    # actions: ["slack"]  
+
+  - id: rule_no
+    enabled: true
+    # VLM応答に"no"が含まれる場合に有効化される
+    when:
+      answer_in: ["no"]
+    # 実行アクションは”slack”（slack webhook通知）
+    actions: ["slack"]
+    # actions: ["slack", "device"]
+    # 実行アクションは、なし（または、`enabled`タグをfalseにする）
+    # actions: []
+
+  - id: rule_keyword_alert
+    enabled: true
+    # VLM応答に、"ALERT", "WARNING", "CAUTION"のいずれか、が含まれる場合に有効化される
+    when:
+      text_contains_any: ["ALERT", "WARNING", "CAUTION"]
+      # text_contains_any: ["DANGER", "ABNORMAL"]
+    # actions: ["slack"]
+    # 実行アクションは”slack”（slack webhook通知）と"device"（IP制御機器へのリクエスト送信）
+    actions: ["slack", "device"]
+
+  - id: rule_risk_high
+    enabled: true
+    # VLM応答に、含まれている"risk_score: <数値>" >= thresholdの場合に有効化される（`>` ではなく `>=`）
+    # threshold に `${RISK_THRESHOLD}` を書くと、環境変数 `RISK_THRESHOLD` を参照する
+    when:
+      # risk_score_gte: 0.75
+      risk_score_gte: "${RISK_THRESHOLD}"
+    # actions: ["slack"]
+    # 実行アクションは”slack”（slack webhook通知）と"device"（IP制御機器へのリクエスト送信）
+    actions: ["slack", "device"]
