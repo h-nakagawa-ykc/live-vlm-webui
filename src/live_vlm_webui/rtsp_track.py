@@ -95,7 +95,13 @@ class RTSPVideoTrack(VideoStreamTrack):
             logger.info(f"Connecting to RTSP stream: {safe_url}")
 
             # Open RTSP stream
-            self.container = av.open(self.rtsp_url, options=self.options)
+            # self.container = av.open(self.rtsp_url, options=self.options)
+            try:
+                self.container = av.open(self.rtsp_url, options=self.options)
+            except Exception as e:
+                logger.error(f"Failed to connect to RTSP stream {safe_url}: {e} -> rtsp_transport is UDP retry...")
+                self.options["rtsp_transport"] = "udp"
+                self.container = av.open(self.rtsp_url, options=self.options)
 
             # Get video stream
             if not self.container.streams.video:
