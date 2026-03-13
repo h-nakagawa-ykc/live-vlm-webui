@@ -46,12 +46,21 @@ class RuleEvaluator:
         text_upper = text.upper()
         text_json = self._parse_json_text(text)
 
+        # debug for Json check
+        logger.debug("@payload: %s.", payload)
+        logger.debug("@text: %s.", text)
+        logger.debug("@text_upper: %s.", text_upper)
+        logger.debug("@text_json: %s.", text_json)
+
         answer = self._extract_answer(payload, text, text_json)
-        risk_score = self._extract_risk_score(payload, text_json)
+        risk_score = self._extract_risk_score(payload, text, text_json)
 
         matched_rule_ids: List[str] = []
         action_set: Set[str] = set()
 
+        # debug for Json check
+        logger.debug("@answer: %s.", answer)
+        logger.debug("@risk_score: %s.", risk_score)
         context = {
             "answer": answer,
             "risk_score": risk_score,
@@ -95,11 +104,19 @@ class RuleEvaluator:
     def _extract_risk_score(
         self,
         payload: Mapping[str, Any],
+        text: str,
         text_json: Optional[Mapping[str, Any]],
     ) -> Optional[float]:
         risk_value = payload.get("risk_score")
         if risk_value is None and text_json is not None:
             risk_value = text_json.get("risk_score")
+        if risk_value is None:
+            # text='risk_score: 0.XX'、text='{ "risk_score: 0.XX" }'等を想定し、'risk_score'と'<数値>'の2個の文字列グループに分割
+            match = re.search(r"([\s|\"]*risk_score[\s|\"]*:\D*)(\d*.\d*)", text, re.DOTALL)
+            logger.debug("@--match: %s.", match)
+            if match:
+                # 文字列グループ(タプル)の2番目に`<数値>`が格納されている想定
+                risk_value = match.groups()[1]
         if risk_value is None:
             return None
         try:
