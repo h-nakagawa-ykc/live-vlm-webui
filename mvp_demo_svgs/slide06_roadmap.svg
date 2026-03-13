@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <rect width="1600" height="900" fill="#f7fff7"/>
+  <text x="60" y="90" font-family="Noto Sans CJK JP, sans-serif" font-size="48" fill="#1f5f2b" font-weight="700">ロードマップと次アクション（MVP以降）</text>
+
+  <line x1="170" y1="220" x2="170" y2="780" stroke="#6da877" stroke-width="8"/>
+
+  <circle cx="170" cy="250" r="22" fill="#2e7d32"/>
+  <rect x="240" y="200" width="1290" height="110" rx="14" fill="#e2f3e5" stroke="#9bcc9f" stroke-width="2"/>
+  <text x="280" y="248" font-family="Noto Sans CJK JP, sans-serif" font-size="31" fill="#22592a" font-weight="700">Phase 1: MVP安定化（今ここ）</text>
+  <text x="280" y="288" font-family="Noto Sans CJK JP, sans-serif" font-size="26" fill="#2a5f31">risk_score判定の整合修正 / integration test安定化 / デモ運用手順の固定化</text>
+
+  <circle cx="170" cy="380" r="22" fill="#4b9b52"/>
+  <rect x="240" y="330" width="1290" height="110" rx="14" fill="#ecf8ee" stroke="#a7d7ad" stroke-width="2"/>
+  <text x="280" y="378" font-family="Noto Sans CJK JP, sans-serif" font-size="31" fill="#22592a" font-weight="700">Phase 2: payload/ルール高度化</text>
+  <text x="280" y="418" font-family="Noto Sans CJK JP, sans-serif" font-size="26" fill="#2a5f31">JSON運用強化、labels条件、重複通知抑制、監査ログ（event_id/rule_id/action_result）</text>
+
+  <circle cx="170" cy="510" r="22" fill="#6ab070"/>
+  <rect x="240" y="460" width="1290" height="110" rx="14" fill="#f2fbf3" stroke="#b8e1bd" stroke-width="2"/>
+  <text x="280" y="508" font-family="Noto Sans CJK JP, sans-serif" font-size="31" fill="#22592a" font-weight="700">Phase 3: 外部連携拡張</text>
+  <text x="280" y="548" font-family="Noto Sans CJK JP, sans-serif" font-size="26" fill="#2a5f31">ActionAdapter抽象化、MQTT/Teams/LINE、運用設定のノーコード化</text>
+
+  <circle cx="170" cy="640" r="22" fill="#89c18e"/>
+  <rect x="240" y="590" width="1290" height="150" rx="14" fill="#f8fdf8" stroke="#c8e8cc" stroke-width="2"/>
+  <text x="280" y="638" font-family="Noto Sans CJK JP, sans-serif" font-size="31" fill="#22592a" font-weight="700">将来: Physical AI / Embodied AI連携</text>
+  <text x="280" y="678" font-family="Noto Sans CJK JP, sans-serif" font-size="26" fill="#2a5f31">ROS2ブリッジ、ロボット制御ノード連携、デジタルツイン統合判定</text>
+  <text x="280" y="718" font-family="Noto Sans CJK JP, sans-serif" font-size="26" fill="#2a5f31">監視系デモから、行動オーケストレーション基盤へ段階拡張</text>
+
+  <text x="60" y="840" font-family="Noto Sans CJK JP, sans-serif" font-size="26" fill="#2d5d33">Reference: docs/development/action-orchestration-roadmap-ja.md</text>
+</svg>

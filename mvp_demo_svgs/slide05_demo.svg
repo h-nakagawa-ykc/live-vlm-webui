@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <rect width="1600" height="900" fill="#fffaf3"/>
+  <text x="60" y="90" font-family="Noto Sans CJK JP, sans-serif" font-size="48" fill="#7a4d12" font-weight="700">MVPデモシナリオ（実演プラン）</text>
+
+  <rect x="80" y="150" width="460" height="700" rx="18" fill="#fff" stroke="#e7cda3" stroke-width="3"/>
+  <text x="120" y="220" font-family="Noto Sans CJK JP, sans-serif" font-size="34" fill="#8a5a00" font-weight="700">Demo 1</text>
+  <text x="120" y="270" font-family="Noto Sans CJK JP, sans-serif" font-size="30" fill="#5f4a2a">Yes/No 判定</text>
+  <text x="120" y="330" font-family="Noto Sans CJK JP, sans-serif" font-size="27" fill="#5f4a2a">入力: 危険行為の有無を判定</text>
+  <text x="120" y="380" font-family="Noto Sans CJK JP, sans-serif" font-size="27" fill="#5f4a2a">yes -> Slack + Device</text>
+  <text x="120" y="430" font-family="Noto Sans CJK JP, sans-serif" font-size="27" fill="#5f4a2a">no -> Slack only</text>
+
+  <rect x="120" y="500" width="380" height="300" rx="12" fill="#f9f2e6"/>
+  <text x="145" y="560" font-family="Noto Sans CJK JP, sans-serif" font-size="25" fill="#6a4a1d">見せ場</text>
+  <text x="145" y="605" font-family="Noto Sans CJK JP, sans-serif" font-size="24" fill="#6a4a1d">- 判定に応じた外部動作分岐</text>
+  <text x="145" y="645" font-family="Noto Sans CJK JP, sans-serif" font-size="24" fill="#6a4a1d">- WebUIと通知の同時可視化</text>
+  <text x="145" y="685" font-family="Noto Sans CJK JP, sans-serif" font-size="24" fill="#6a4a1d">- MVPの価値が最も伝わる</text>
+
+  <rect x="570" y="150" width="460" height="700" rx="18" fill="#fff" stroke="#e7cda3" stroke-width="3"/>
+  <text x="610" y="220" font-family="Noto Sans CJK JP, sans-serif" font-size="34" fill="#8a5a00" font-weight="700">Demo 2</text>
+  <text x="610" y="270" font-family="Noto Sans CJK JP, sans-serif" font-size="30" fill="#5f4a2a">Keyword 判定</text>
+  <text x="610" y="330" font-family="Noto Sans CJK JP, sans-serif" font-size="27" fill="#5f4a2a">ALERT/WARNING/CAUTION</text>
+  <text x="610" y="380" font-family="Noto Sans CJK JP, sans-serif" font-size="27" fill="#5f4a2a">一致時に Slack通知</text>
+
+  <rect x="610" y="500" width="380" height="300" rx="12" fill="#f9f2e6"/>
+  <text x="635" y="560" font-family="Noto Sans CJK JP, sans-serif" font-size="25" fill="#6a4a1d">見せ場</text>
+  <text x="635" y="605" font-family="Noto Sans CJK JP, sans-serif" font-size="24" fill="#6a4a1d">- 非構造テキストでも検知</text>
+  <text x="635" y="645" font-family="Noto Sans CJK JP, sans-serif" font-size="24" fill="#6a4a1d">- 運用に近い実務的シナリオ</text>
+  <text x="635" y="685" font-family="Noto Sans CJK JP, sans-serif" font-size="24" fill="#6a4a1d">- ノイズを抑えた通知制御</text>
+
+  <rect x="1060" y="150" width="460" height="700" rx="18" fill="#fff" stroke="#e7cda3" stroke-width="3"/>
+  <text x="1100" y="220" font-family="Noto Sans CJK JP, sans-serif" font-size="34" fill="#8a5a00" font-weight="700">Demo 3</text>
+  <text x="1100" y="270" font-family="Noto Sans CJK JP, sans-serif" font-size="30" fill="#5f4a2a">risk_score 判定</text>
+  <text x="1100" y="330" font-family="Noto Sans CJK JP, sans-serif" font-size="27" fill="#5f4a2a">閾値以上で通知</text>
+  <text x="1100" y="380" font-family="Noto Sans CJK JP, sans-serif" font-size="27" fill="#5f4a2a">（修正後に実施推奨）</text>
+
+  <rect x="1100" y="500" width="380" height="300" rx="12" fill="#f9f2e6"/>
+  <text x="1125" y="560" font-family="Noto Sans CJK JP, sans-serif" font-size="25" fill="#6a4a1d">見せ場</text>
+  <text x="1125" y="605" font-family="Noto Sans CJK JP, sans-serif" font-size="24" fill="#6a4a1d">- 構造化出力運用の有効性</text>
+  <text x="1125" y="645" font-family="Noto Sans CJK JP, sans-serif" font-size="24" fill="#6a4a1d">- 閾値チューニング議論が可能</text>
+  <text x="1125" y="685" font-family="Noto Sans CJK JP, sans-serif" font-size="24" fill="#6a4a1d">- 次フェーズへ繋がる導線</text>
+</svg>
