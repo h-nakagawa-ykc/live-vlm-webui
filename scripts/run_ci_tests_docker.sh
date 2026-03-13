@@ -39,6 +39,7 @@ docker run --rm -t \
     rm -rf /var/lib/apt/lists/* &&
     python -m pip install -U pip &&
     pip install -e '.[dev]' &&
+    pip install -r services/action-webhook/requirements.txt &&
     python -m pytest ${TEST_TARGETS} -v
   "
 
