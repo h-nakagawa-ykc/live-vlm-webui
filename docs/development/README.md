@@ -35,6 +35,7 @@ This directory contains documentation for developers working on the project.
 - **`../../tests/README.md`** - Testing infrastructure and organization
 - **`../../tests/e2e/README.md`** - End-to-end testing with Playwright
 - **`../../CONTRIBUTING.md`** - Contribution guidelines
+- **`e2e-live-vlm-to-action-webhook-smoke-ja.md`** - E2E smoke checks for action-webhook flow
 
 ## Development Workflow
 
@@ -44,4 +45,3 @@ This directory contains documentation for developers working on the project.
 4. **Profile if needed**: `./scripts/profile_code.sh component`
 
 See `testing-quickstart.md` for more details.
-
