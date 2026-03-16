@@ -48,6 +48,22 @@ ACTION_WEBHOOK_URL=http://127.0.0.1:8081 bash scripts/run_e2e_live_vlm_action_we
 COMPOSE_FILE=docker/docker-compose.override.yml bash scripts/run_e2e_live_vlm_action_webhook_smoke.sh
 ```
 
+### オプションの意図と挙動
+1. `START_LIVE_VLM=1`
+- 目的: `action-webhook` 単体確認に加えて、`live-vlm-webui` コンテナの起動疎通も同時に確認する。
+- 変化: スクリプト内で `live-vlm-webui` の `docker compose up` を追加実行する。
+- 注意: このオプションを有効にしても、カメラ入力からの実推論まで自動検証するわけではない。
+
+2. `ACTION_WEBHOOK_URL=...`
+- 目的: `action-webhook` の接続先を切り替える（別ホスト、ポート変更、リバースプロキシ配下など）。
+- 変化: `healthz` と `/events` の送信先URLが指定値に変わる。
+- 想定例: `http://127.0.0.1:8081`、`http://action-webhook:8081`（同一ネットワーク内）。
+
+3. `COMPOSE_FILE=...`
+- 目的: 使用する compose 定義を切り替える（環境別の定義、実験用定義）。
+- 変化: スクリプトが `docker compose -f <指定ファイル>` でサービスを起動する。
+- 想定例: 標準の `docker/docker-compose.override.yml` 以外の compose ファイル検証。
+
 ## 実Slack/実機器の手動確認
 1. `.env` へ `SLACK_WEBHOOK_URL` と `DEVICE_ENDPOINT_URL` を設定
 2. `action-webhook` を再起動
@@ -67,4 +83,3 @@ docker compose -f docker/docker-compose.override.yml logs --tail=200 action-webh
 3. 期待アクションが出ない
 - ルール定義: `services/action-webhook/rule_configs/rules.yaml`
 - 評価ロジック: `services/action-webhook/rules.py`
-
